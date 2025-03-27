@@ -6,6 +6,7 @@ import {
   UpdateTaskDataType,
 } from "../repositories/taskRepository";
 import { PaginationDataTypes } from "../validations/paginationSchema";
+import { string } from "zod";
 
 export type TaskDataCreate = TaskDataTypes & { user_id: string; id: string };
 export type UserTaskPagination = PaginationDataTypes & { userID: string };
@@ -14,7 +15,7 @@ export type TaskRepositoryTypes = {
   createTask(data: TaskDataCreate): Promise<CreateTaskDataType | undefined>;
   getTaskByID(id: string): Promise<Partial<CreateTaskDataType> | undefined>;
 
-  getTasks(data: UserTaskPagination):  Promise<CreateTaskDataType[] | undefined>;
+  getTasks(data: UserTaskPagination): Promise<CreateTaskDataType[] | undefined>;
 
   updateTask(data: UpdateTaskDataType): Promise<UpdateTaskDataType | undefined>;
   deleteTaskByID(id: string): Promise<{ id: string } | undefined>;
@@ -60,6 +61,49 @@ export const userServices = {
       });
 
       return userTasks;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async update(
+    id: string,
+    { title, description, date, status, user_id }: TaskDataCreate,
+    repository: TaskRepositoryTypes
+  ) {
+    try {
+      const task = await repository.getTaskByID(id);
+      if (!task) throw new AppError("task not found", 404);
+      if (task.user_id != user_id) {
+        throw new AppError("user not authorized to update task", 401);
+      }
+
+      const taskUpdated = await repository.updateTask({
+        id: randomUUID(),
+        title,
+        description,
+        date,
+        status: status || "pending",
+        user_id,
+        update_at: new Date(),
+      });
+
+      return taskUpdated;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async delete(id: string, user_id: string, repository: TaskRepositoryTypes) {
+    try {
+      const task = await repository.getTaskByID(id);
+      if (!task) throw new AppError("task not found", 404);
+      if (task.user_id != user_id) {
+        throw new AppError("user not authorized to delete task", 401);
+      }
+      const taskDeleted = await repository.deleteTaskByID(id);
+
+      return taskDeleted;
     } catch (error) {
       throw error;
     }
