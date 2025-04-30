@@ -17,7 +17,7 @@ app.use(cookieParser());
 const whiteList = [
   //"http://localhost:5173",
   //"http://127.0.0.1:5173",
-  "task-manager-psi-red.vercel.app",
+  "https://task-manager-psi-red.vercel.app",
 ];
 
 app.use(
